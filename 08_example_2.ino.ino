@@ -5,7 +5,7 @@
 
 // configurable parameters
 #define SND_VEL 346.0     // sound velocity at 24 celsius degree (unit: m/sec)
-#define INTERVAL 100      // sampling interval (unit: msec)
+#define INTERVAL 25      // sampling interval (unit: msec)
 #define PULSE_DURATION 10 // ultra-sound Pulse Duration (unit: usec)
 #define _DIST_MIN 100.0   // minimum distance to be measured (unit: mm)
 #define _DIST_MAX 300.0   // maximum distance to be measured (unit: mm)
@@ -13,7 +13,7 @@
 #define TIMEOUT ((INTERVAL / 2) * 1000.0) // maximum echo waiting time (unit: usec)
 #define SCALE (0.001 * 0.5 * SND_VEL) // coefficent to convert duration to distance
 
-unsigned long last_sampling_time = 25;   // unit: msec
+unsigned long last_sampling_time;   // unit: msec
 
 void setup() {
   // initialize GPIO pins
@@ -28,6 +28,10 @@ void setup() {
 
 void loop() {
   float distance;
+  float pre_distance;
+  float distance_inuse;
+  int brightness;
+  int a = 100;
 
   // wait until next sampling time. 
   // millis() returns the number of milliseconds since the program started.
@@ -37,12 +41,30 @@ void loop() {
 
   distance = USS_measure(PIN_TRIG, PIN_ECHO); // read distance
 
-  //200 - distance 's abs < 100 analgowrite 
-  // else analogwite = 0
-  if( (distance-200) * (distance-200) < 10000){
-    analogWrite(PIN_LED , 0 + int(255/100 * abs(distance-200)));
-  }else{
-    analogWrite(PIN_LED, 255);
+  if (distance < _DIST_MIN || distance > _DIST_MAX) { //distance is outside the min or max range
+    distance_inuse = pre_distance; // use the distance measured just before instead
+  } else {
+    distance_inuse = distance;
+  }
+
+  if (distance < _DIST_MIN) {
+    distance = _DIST_MIN - 10.0;    // Set Lower Value
+    analogWrite(PIN_LED, 255);       // LED OFF
+  } else if (distance > _DIST_MAX) {
+    distance = _DIST_MAX + 10.0;    // Set Higher Value
+    analogWrite(PIN_LED, 255);       // LED OFF
+  } else {    // In desired Range
+    if (distance_inuse < 200) {
+      brightness = 255 - (50.0 / 2000.0 * (distance_inuse-a) * (distance_inuse-a));
+      analogWrite(PIN_LED, brightness);
+    }
+    else if (distance_inuse > 200) {
+      a = 300;
+      brightness = 255 - (50.0 / 2000.0 * (distance_inuse-a) * (distance_inuse-a));
+      analogWrite(PIN_LED, brightness);
+    } else {
+      analogWrite(PIN_LED, 0);
+    }
   }
 
   // output the distance to the serial port
@@ -51,11 +73,9 @@ void loop() {
   Serial.print(",Max:");       Serial.print(_DIST_MAX);
   Serial.println("");
   
-  // do something here
-  // delay(50); // Assume that it takes 50ms to do something.
-  
   // update last sampling time
   last_sampling_time += INTERVAL;
+  pre_distance = distance;
 }
 
 // get a distance reading from USS. return value is in millimeter.
