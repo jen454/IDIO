@@ -30,8 +30,8 @@ void setup()
 void loop()
 {
   unsigned long time_curr = millis();
-  int a_value, duty;
-  double dist;
+  int value, duty;
+  double dist_;
   double ema = 0;
 
   // wait until next event time
@@ -40,39 +40,39 @@ void loop()
   last_loop_time += LOOP_INTERVAL;
 
   // Read IR Sensor value !!!
-  a_value = analogRead(PIN_IR);
+  value = analogRead(PIN_IR);
 
   // Convert IR sensor value into distance !!!
-  dist = (6762.0 / (a_value - 9) - 4.0) * 10.0;
+  dist_ = (6762.0 / (value - 9) - 4.0) * 10.0;
 
   // we need distance range filter here !!!
 
 
-  if (dist < _DIST_MIN) {      // Set Lower Value
+  if (dist_ < _DIST_MIN) {      // Set Lower Value
     digitalWrite(PIN_LED, 1);  // LED OFF
   }
 
-  else if (dist > _DIST_MAX) {  // Set Higher Value
+  else if (dist_ > _DIST_MAX) {  // Set Higher Value
     digitalWrite(PIN_LED, 1);   // LED OFF
   }
 
   else {
-    duty = ((dist - 100.0) / 150.0) * (3500 - _DUTY_MIN);
+    duty = ((dist_ - 100.0) / 150.0) * (3500 - _DUTY_MIN);
     digitalWrite(PIN_LED, 0);
   }
 
   // we need EMA filter here !!!
-  ema = alpha * dist + (1 - alpha) * ema;
+  ema = alpha * dist_ + (1 - alpha) * ema;
 
   // map distance into duty
-  //duty = map(a_value, 0, 1023, _DUTY_MIN, _DUTY_MAX);
+  //duty = map(value, 0, 1023, _DUTY_MIN, _DUTY_MAX);
   //duty = (_DUTY_MAX - _DUTY_MIN) * 180
   myservo.writeMicroseconds(duty);
 
   // print IR sensor value, distnace, duty !!!
   Serial.print("MIN: "); Serial.print(_DIST_MIN);
-  Serial.print(", IR: "); Serial.print(a_value);
-  Serial.print(", dist: "); Serial.print(dist);
+  Serial.print(", IR: "); Serial.print(value);
+  Serial.print(", dist_: "); Serial.print(dist_);
   Serial.print(", ema: "); Serial.print(ema);
   Serial.print(", servo: "); Serial.print(duty);
   //Serial.print(", low: "); Serial.print(LOW);
@@ -82,8 +82,8 @@ void loop()
 
   
   // Serial.print(" = ");
-  //  Serial.println((a_value / 1024.0) * 5.0);
-  //  Serial.print("IR_SENSOR"); Serial.println(dist);
+  //  Serial.println((value / 1024.0) * 5.0);
+  //  Serial.print("IR_SENSOR"); Serial.println(dist_);
   //  Serial.print(" Volt => Duty : ");
   //  Serial.print(duty);
   //  Serial.println("usec");
