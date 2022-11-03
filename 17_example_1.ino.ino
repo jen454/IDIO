@@ -43,7 +43,7 @@ void loop()
   value = analogRead(PIN_IR);
 
   // Convert IR sensor value into distance !!!
-  dist_ = (6762.0 / (value - 9) - 4.0) * 10.0;
+  dist_ = (6762.0 / (value - 9) - 4.0) * 10.0 - 60.0;
 
   // we need distance range filter here !!!
 
